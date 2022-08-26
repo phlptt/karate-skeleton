@@ -1,0 +1,21 @@
+# Ignore Mac system files
+.DS_store
+.DS_Store
+.DS_Store
+karate/DS_Store
+# Ignore node_modules folder
+node_modules
+
+# Ignore all text files
+*.txt
+
+# Ignore all text files
+target
+
+# Ignore files related to API keys
+.env
+
+# Ignore files related to IntelliJ
+.idea
+
+npm-debug.log

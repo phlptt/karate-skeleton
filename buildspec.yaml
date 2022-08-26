@@ -1,0 +1,41 @@
+# basic template of a CodeBuild buildspec to build and push a Docker image to ECR.
+# https://docs.aws.amazon.com/codebuild/latest/userguide/build-spec-ref.html
+
+version: 0.2
+env:
+  variables:
+    REGION: "eu-west-2"
+    AWS_ACCOUNT_ID: "182251279518"
+    ECR_REPO: "karate-poc"
+
+phases:
+#  recommend the install phase to set up your build environment
+#  install:
+#    run-as: Linux-user-name
+#    on-failure: ABORT | CONTINUE
+#    runtime-versions:
+#      java: corretto8
+#      python: 3.x
+#      ruby: "$MY_RUBY_VAR"
+#    commands:
+#      - command
+#      - command
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com
+  build:
+    commands:
+      - VERSION=$(date +%H-%M-%S_%d-%m-%Y)
+      - echo Build started on `date`
+      - echo Building Docker image with version $VERSION
+      - docker build -t $ECR_REPO:$VERSION -t $AWS_ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$ECR_REPO:$VERSION .
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - echo Pushing the Docker image...
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$ECR_REPO:$VERSION
+      - echo Writing ECS CodePipeline image definitions file...
+      - printf "[{\"name\":\"$ECR_REPO\",\"imageUri\":\"%s\"}]" $AWS_ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$ECR_REPO:$VERSION > imagedefinitions.json
+artifacts:
+  files: imagedefinitions.json
